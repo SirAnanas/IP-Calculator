@@ -98,6 +98,7 @@ fn ip_handling() {
 
     let subnet_mask_bits = format!("{subnet_count:b}").len();
     let mut marked_subnet_mask_bits = String::new();
+
     for _ in 0..subnet_mask_bits {
         marked_subnet_mask_bits.push('1');
     }
@@ -118,53 +119,11 @@ fn ip_handling() {
     while marked_subnet_mask_bits.len() % 8 != 0 {
         marked_subnet_mask_bits.push('0');
     }
-    
-    let subnet_mask_1: u8;
-    let subnet_mask_2: u8;
-    let subnet_mask_3: u8;
-
-    if marked_subnet_mask_bits.len() == 8 {
-        subnet_mask_1 = match u8::from_str_radix(&marked_subnet_mask_bits, 2) {
-            Ok(subnet_mask_1) => subnet_mask_1,
-            Err(_) => 255,
-        };
-        subnet_mask_2 = 0;
-        subnet_mask_3 = 0;
-    } else if marked_subnet_mask_bits.len() == 16 {
-        subnet_mask_1 = match u8::from_str_radix(&marked_subnet_mask_bits[..8], 2) {
-            Ok(subnet_1) => subnet_1,
-            Err(_) => 255,
-        };
-        subnet_mask_2 = match u8::from_str_radix(&marked_subnet_mask_bits[8..16], 2) {
-            Ok(subnet_2) => subnet_2,
-            Err(_) => 255,
-        };
-        subnet_mask_3 = 0;
-    } else { 
-        subnet_mask_1 = match u8::from_str_radix(&marked_subnet_mask_bits[..8], 2) {
-            Ok(subnet_1) => subnet_1,
-            Err(_) => 255,
-        };
-        subnet_mask_2 = match u8::from_str_radix(&marked_subnet_mask_bits[8..16], 2) {
-            Ok(subnet_2) => subnet_2,
-            Err(_) => 255,
-        };
-        subnet_mask_3 = match u8::from_str_radix(&marked_subnet_mask_bits[16..24], 2) {
-            Ok(subnet_3) => subnet_3,
-            Err(_) => 255,
-        };
-    }
-
-    let subnet_mask: Ipv4Addr = match ip_address_class {
-        'A' => Ipv4Addr::new(255, subnet_mask_1, subnet_mask_2, subnet_mask_3), 
-        'B' => Ipv4Addr::new(255, 255, subnet_mask_1, subnet_mask_2),        
-        'C' => Ipv4Addr::new(255, 255, 255, subnet_mask_1), 
-        _ => Ipv4Addr::new(255, 255, 255, 255),
-    };
 
     let subnet_other = subnet - 1;
     let subnet_bin = format!("{subnet_other:b}"); 
     let mut subnet_address = String::new();
+
     if subnet_bin.len() != subnet_mask_bits {
         for _ in 0..(subnet_mask_bits - subnet_bin.len()) {
             subnet_address.push('0');
@@ -182,92 +141,10 @@ fn ip_handling() {
         broadcast_address.push('1');
     }
 
-    let subnet_1: u8;
-    let subnet_2: u8;
-    let subnet_3: u8;
+    let subnet_mask = address_sanitization(marked_subnet_mask_bits, ip_address, ip_address_class, 2);
 
-    if subnet_address.len() == 8 {
-        subnet_1 = match u8::from_str_radix(&subnet_address, 2) {
-            Ok(subnet_1) => subnet_1,
-            Err(_) => 255,
-        };
-        subnet_2 = 0;
-        subnet_3 = 0;
-    } else if subnet_address.len() == 16 { 
-        subnet_1 = match u8::from_str_radix(&subnet_address[..8], 2) {
-            Ok(subnet_1) => subnet_1,
-            Err(_) => 255,
-        };
-        subnet_2 = match u8::from_str_radix(&subnet_address[8..16], 2) {
-            Ok(subnet_2) => subnet_2,
-            Err(_) => 255,
-        };
-        subnet_3 = 0;
-    } else {
-        subnet_1 = match u8::from_str_radix(&subnet_address[..8], 2) {
-            Ok(subnet_1) => subnet_1,
-            Err(_) => 255,
-        };
-        subnet_2 = match u8::from_str_radix(&subnet_address[8..16], 2) {
-            Ok(subnet_2) => subnet_2,
-            Err(_) => 255,
-        };
-        subnet_3 = match u8::from_str_radix(&subnet_address[16..24], 2) {
-            Ok(subnet_3) => subnet_3,
-            Err(_) => 255,
-        };
-    }
-    
-    let broadcast_1: u8;
-    let broadcast_2: u8;
-    let broadcast_3: u8;
-
-    if broadcast_address.len() == 8 {
-        broadcast_1 = match u8::from_str_radix(&broadcast_address, 2) {
-            Ok(broadcast_1) => broadcast_1,
-            Err(_) => 255,
-        };
-        broadcast_2 = 255;
-        broadcast_3 = 255;
-    } else if broadcast_address.len() == 16 { 
-        broadcast_1 = match u8::from_str_radix(&broadcast_address[..8], 2) {
-            Ok(broadcast_1) => broadcast_1,
-            Err(_) => 255,
-        };
-        broadcast_2 = match u8::from_str_radix(&broadcast_address[8..16], 2) {
-            Ok(broadcast_2) => broadcast_2,
-            Err(_) => 255,
-        };
-        broadcast_3 = 255;
-    } else {
-        broadcast_1 = match u8::from_str_radix(&broadcast_address[..8], 2) {
-            Ok(broadcast_1) => broadcast_1,
-            Err(_) => 255,
-        };
-        broadcast_2 = match u8::from_str_radix(&broadcast_address[8..16], 2) {
-            Ok(broadcast_2) => broadcast_2,
-            Err(_) => 255,
-        };
-        broadcast_3 = match u8::from_str_radix(&broadcast_address[16..24], 2) {
-            Ok(broadcast_3) => broadcast_3,
-            Err(_) => 255,
-        };
-    }
-
-    let octets = ip_address.octets();
-
-    let subnet_address = match ip_address_class {
-        'A' => Ipv4Addr::new(octets[0], subnet_1, subnet_2, subnet_3),
-        'B' => Ipv4Addr::new(octets[0], octets[1], subnet_1, subnet_2),
-        'C' => Ipv4Addr::new(octets[0], octets[1], octets[2], subnet_1),
-        _ => Ipv4Addr::new(octets[0], octets[1], octets[2], octets[3]),
-    };
-    let broadcast_address = match ip_address_class {
-        'A' => Ipv4Addr::new(octets[0], broadcast_1, broadcast_2, broadcast_3),
-        'B' => Ipv4Addr::new(octets[0], octets[1], broadcast_1, broadcast_2),
-        'C' => Ipv4Addr::new(octets[0], octets[1], octets[2], broadcast_1),
-        _ => Ipv4Addr::new(octets[0], octets[1], octets[2], octets[3]),
-    };
+    let subnet_address = address_sanitization(subnet_address, ip_address, ip_address_class, 0);
+    let broadcast_address = address_sanitization(broadcast_address, ip_address, ip_address_class, 1);
 
     let range_min = Ipv4Addr::new(subnet_address.octets()[0], subnet_address.octets()[1], subnet_address.octets()[2], subnet_address.octets()[3] + 1);
     let range_max = Ipv4Addr::new(broadcast_address.octets()[0], broadcast_address.octets()[1], broadcast_address.octets()[2], broadcast_address.octets()[3] -1);
@@ -332,4 +209,76 @@ fn ip_address_input() -> (Ipv4Addr, char, u32, Ipv4Addr) {
         };
         break (ip_address, ip_address_class, maximum_subnet_count, net_mask);
     }
+}
+
+fn address_sanitization(address_tsan: String, ip_address: Ipv4Addr, ip_address_class: char, mode: u8) -> Ipv4Addr {
+    let octet_1: u8;
+    let mut octet_2: u8;
+    let mut octet_3: u8;
+    let octets = ip_address.octets();
+
+    let address_san: Ipv4Addr;
+
+    match mode {
+        0 | 2 => {
+            octet_2 = 0;
+            octet_3 = 0;
+        }
+        1 => {
+            octet_2 = 255;
+            octet_3 = 255;
+        }
+        _ => {
+            octet_2 = 0;
+            octet_3 = 0;
+        }
+    }
+
+    if address_tsan.len() == 8 {
+        octet_1 = match u8::from_str_radix(&address_tsan[..8], 2) {
+            Ok(octet_1) => octet_1,
+            Err(_) => 255,
+        };
+    } else if address_tsan.len() == 16 {
+        octet_1 = match u8::from_str_radix(&address_tsan[..8], 2) {
+            Ok(octet_1) => octet_1,
+            Err(_) => 255,
+        };
+        octet_2 = match u8::from_str_radix(&address_tsan[8..16], 2) {
+            Ok(octet_2) => octet_2,
+            Err(_) => 255,
+        };
+    } else {
+        octet_1 = match u8::from_str_radix(&address_tsan[..8], 2) {
+            Ok(octet_1) => octet_1,
+            Err(_) => 255,
+        };
+        octet_2 = match u8::from_str_radix(&address_tsan[8..16], 2) {
+            Ok(octet_2) => octet_2,
+            Err(_) => 255,
+        };
+        octet_3 = match u8::from_str_radix(&address_tsan[16..24], 2) {
+            Ok(octet_3) => octet_3,
+            Err(_) => 255,
+        };
+    }
+
+    if mode == 0 || mode == 1 {
+        address_san = match ip_address_class {
+            'A' => Ipv4Addr::new(octets[0], octet_1, octet_2, octet_3),
+            'B' => Ipv4Addr::new(octets[0], octets[1], octet_1, octet_2),
+            'C' => Ipv4Addr::new(octets[0], octets[1], octets[2], octet_1),
+            _ => Ipv4Addr::new(octets[0], octets[1], octets[2], octets[3]),
+        };
+    } else if mode == 2 {
+        address_san = match ip_address_class {
+            'A' => Ipv4Addr::new(255, octet_1, octet_2, octet_3),
+            'B' => Ipv4Addr::new(255, 255, octet_1, octet_2),
+            'C' => Ipv4Addr::new(255, 255, 255, octet_1),
+             _ => Ipv4Addr::new(255, 255, 255, 255),
+        };
+    } else {
+        address_san = Ipv4Addr::new(255,255,255,255);
+    }
+    return address_san;
 }
