@@ -1,4 +1,13 @@
 use std::{io, net::Ipv4Addr, cmp::Ordering};
+
+#[derive(Debug)]
+enum IPClass {
+    A,
+    B,
+    C,
+}
+
+
 fn main() {
     loop {
         println!("IP Address Calculator. Made by Ananas");
@@ -30,15 +39,17 @@ fn ip_handling() {
     println!("Please input an IP Address");
     
     let ip_address: Ipv4Addr;
-    let ip_address_class: char;
+    let ip_address_class: IPClass;
     let net_mask: Ipv4Addr;
 
     let subnet_count: u32;
-    let maximum_subnet_count: u32;
+    let theor_maximum_subnet_count: u32;
     let subnet: u32;
     
-    (ip_address, ip_address_class, maximum_subnet_count, net_mask) = ip_address_input();
+    (ip_address, ip_address_class, theor_maximum_subnet_count, net_mask) = ip_address_input();
 
+    let maximum_subnet_count = theor_maximum_subnet_count - 1;
+    
     println!("Please input a subnet count (max count: {})", maximum_subnet_count);
 
     loop {
@@ -54,6 +65,14 @@ fn ip_handling() {
                 println!("Invalid subnet count, please try again");
                 continue;
             },
+        };
+
+        match subnet_count_inn {
+            0  | 1 => {
+                println!("Invalid subnet, please try again.");
+                continue;
+            }
+            _ => (),
         };
 
         match subnet_count_inn.cmp(&maximum_subnet_count) {
@@ -85,6 +104,14 @@ fn ip_handling() {
             }
         };
 
+        match subnet_inn {
+            0 => {
+                println!("Invalid subnet, please try again.");
+                continue;
+            }
+            _ => (),
+        };
+
         match subnet_inn.cmp(&subnet_count) {
             Ordering::Greater => {
                 println!("Invalid subnet, please try again");
@@ -96,7 +123,7 @@ fn ip_handling() {
         break;
     }
 
-    let subnet_mask_bits = format!("{subnet_count:b}").len();
+    let subnet_mask_bits = format!("{subnet_count:b}").chars().count();
     let mut marked_subnet_mask_bits = String::new();
 
     for _ in 0..subnet_mask_bits {
@@ -111,12 +138,11 @@ fn ip_handling() {
     let subnet_amount = 2_u32.pow(reserved_bits);
 
     let host_per_subnet = match ip_address_class {
-        'A' => 2_u32.pow(24 - reserved_bits) - 2,
-        'B' => 2_u32.pow(16 - reserved_bits) - 2,
-        'C' => 2_u32.pow(8 - reserved_bits) -2,
-        _ => 0,
+        IPClass::A => 2_u32.pow(24 - reserved_bits) - 2,
+        IPClass::B => 2_u32.pow(16 - reserved_bits) - 2,
+        IPClass::C => 2_u32.pow(8 - reserved_bits) -2,
     };
-    while marked_subnet_mask_bits.len() % 8 != 0 {
+    while marked_subnet_mask_bits.chars().count() % 8 != 0 {
         marked_subnet_mask_bits.push('0');
     }
 
@@ -124,7 +150,7 @@ fn ip_handling() {
     let subnet_bin = format!("{subnet_other:b}"); 
     let mut subnet_address = String::new();
 
-    if subnet_bin.len() != subnet_mask_bits {
+    if subnet_bin.chars().count() != subnet_mask_bits {
         for _ in 0..(subnet_mask_bits - subnet_bin.len()) {
             subnet_address.push('0');
         }
@@ -133,26 +159,27 @@ fn ip_handling() {
 
     let mut broadcast_address = subnet_address.clone();
    
-    while subnet_address.len() % 8 != 0 {
+    while subnet_address.chars().count() % 8 != 0 {
         subnet_address.push('0');
     }
 
-    while broadcast_address.len() % 8 != 0 {
+    while broadcast_address.chars().count() % 8 != 0 {
         broadcast_address.push('1');
     }
 
-    let subnet_mask = address_sanitization(marked_subnet_mask_bits, ip_address, ip_address_class, 2);
+    let subnet_mask = address_sanitization(marked_subnet_mask_bits, ip_address, &ip_address_class, 2);
 
-    let subnet_address = address_sanitization(subnet_address, ip_address, ip_address_class, 0);
-    let broadcast_address = address_sanitization(broadcast_address, ip_address, ip_address_class, 1);
+    let subnet_address = address_sanitization(subnet_address, ip_address, &ip_address_class, 0);
+    let broadcast_address = address_sanitization(broadcast_address, ip_address, &ip_address_class, 1);
 
     let range_min = Ipv4Addr::new(subnet_address.octets()[0], subnet_address.octets()[1], subnet_address.octets()[2], subnet_address.octets()[3] + 1);
     let range_max = Ipv4Addr::new(broadcast_address.octets()[0], broadcast_address.octets()[1], broadcast_address.octets()[2], broadcast_address.octets()[3] -1);
 
     println!("IP address: {}", ip_address);
-    println!("IP address class: {}", ip_address_class);
+    println!("IP address class: {:?}", ip_address_class);
     println!("IP address mask: {}", net_mask);
-    println!("Maximum subnet count: {}", maximum_subnet_count);
+    println!("Theoretical maximum subnet count: {}", theor_maximum_subnet_count);
+    println!("Usable maximum subnet count: {}", maximum_subnet_count);
     println!("Subnet count: {}", subnet_count);
     println!("Subnet mask: {}", subnet_mask);
     println!("Chosen subnet: {}", subnet);
@@ -164,10 +191,10 @@ fn ip_handling() {
     println!("Amount of host addresses on all subnets combined: {}", subnet_amount * host_per_subnet);
 }
 
-fn ip_address_input() -> (Ipv4Addr, char, u32, Ipv4Addr) {
+fn ip_address_input() -> (Ipv4Addr, IPClass, u32, Ipv4Addr) {
     loop {
         let mut ip_address = String::new(); 
-        let ip_address_class: char;
+        let ip_address_class: IPClass;
         let net_mask: Ipv4Addr;
 
         let maximum_subnet_count: u32;
@@ -188,17 +215,17 @@ fn ip_address_input() -> (Ipv4Addr, char, u32, Ipv4Addr) {
 
         match ip_address_octets[0] {
             1..=126 => {
-                ip_address_class = 'A';
+                ip_address_class = IPClass::A;
                 maximum_subnet_count = 2_u32.pow(22);
                 net_mask = Ipv4Addr::new(255, 0, 0, 0);
             },
             128..=191 => {    
-                ip_address_class = 'B';
+                ip_address_class = IPClass::B;
                 maximum_subnet_count = 2_u32.pow(14);
                 net_mask = Ipv4Addr::new(255, 255, 0, 0);
             },
             192..=223 => {
-                ip_address_class = 'C';
+                ip_address_class = IPClass::C;
                 maximum_subnet_count = 2_u32.pow(6);
                 net_mask = Ipv4Addr::new(255, 255, 255, 0);
             },
@@ -211,7 +238,7 @@ fn ip_address_input() -> (Ipv4Addr, char, u32, Ipv4Addr) {
     }
 }
 
-fn address_sanitization(address_tsan: String, ip_address: Ipv4Addr, ip_address_class: char, mode: u8) -> Ipv4Addr {
+fn address_sanitization(address_tsan: String, ip_address: Ipv4Addr, ip_address_class: &IPClass, mode: u8) -> Ipv4Addr {
     let octet_1: u8;
     let mut octet_2: u8;
     let mut octet_3: u8;
@@ -234,12 +261,12 @@ fn address_sanitization(address_tsan: String, ip_address: Ipv4Addr, ip_address_c
         }
     }
 
-    if address_tsan.len() == 8 {
+    if address_tsan.chars().count() == 8 {
         octet_1 = match u8::from_str_radix(&address_tsan[..8], 2) {
             Ok(octet_1) => octet_1,
             Err(_) => 255,
         };
-    } else if address_tsan.len() == 16 {
+    } else if address_tsan.chars().count() == 16 {
         octet_1 = match u8::from_str_radix(&address_tsan[..8], 2) {
             Ok(octet_1) => octet_1,
             Err(_) => 255,
@@ -265,17 +292,15 @@ fn address_sanitization(address_tsan: String, ip_address: Ipv4Addr, ip_address_c
 
     if mode == 0 || mode == 1 {
         address_san = match ip_address_class {
-            'A' => Ipv4Addr::new(octets[0], octet_1, octet_2, octet_3),
-            'B' => Ipv4Addr::new(octets[0], octets[1], octet_1, octet_2),
-            'C' => Ipv4Addr::new(octets[0], octets[1], octets[2], octet_1),
-            _ => Ipv4Addr::new(octets[0], octets[1], octets[2], octets[3]),
+            IPClass::A => Ipv4Addr::new(octets[0], octet_1, octet_2, octet_3),
+            IPClass::B => Ipv4Addr::new(octets[0], octets[1], octet_1, octet_2),
+            IPClass::C => Ipv4Addr::new(octets[0], octets[1], octets[2], octet_1),
         };
     } else if mode == 2 {
         address_san = match ip_address_class {
-            'A' => Ipv4Addr::new(255, octet_1, octet_2, octet_3),
-            'B' => Ipv4Addr::new(255, 255, octet_1, octet_2),
-            'C' => Ipv4Addr::new(255, 255, 255, octet_1),
-             _ => Ipv4Addr::new(255, 255, 255, 255),
+            IPClass::A => Ipv4Addr::new(255, octet_1, octet_2, octet_3),
+            IPClass::B => Ipv4Addr::new(255, 255, octet_1, octet_2),
+            IPClass::C => Ipv4Addr::new(255, 255, 255, octet_1),
         };
     } else {
         address_san = Ipv4Addr::new(255,255,255,255);
