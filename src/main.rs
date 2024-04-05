@@ -47,7 +47,7 @@ fn ip_handling() {
     let subnet: u32;
     
     (ip_address, ip_address_class, theor_maximum_subnet_count, net_mask) = ip_address_input();
-
+    
     let maximum_subnet_count = theor_maximum_subnet_count - 1;
     
     println!("Please input a subnet count (max count: {})", maximum_subnet_count);
@@ -123,7 +123,7 @@ fn ip_handling() {
         break;
     }
 
-    let subnet_mask_bits = format!("{subnet_count:b}").chars().count();
+    let subnet_mask_bits = format!("{subnet_count:b}").len();
     let mut marked_subnet_mask_bits = String::new();
 
     for _ in 0..subnet_mask_bits {
@@ -142,7 +142,7 @@ fn ip_handling() {
         IPClass::B => 2_u32.pow(16 - reserved_bits) - 2,
         IPClass::C => 2_u32.pow(8 - reserved_bits) -2,
     };
-    while marked_subnet_mask_bits.chars().count() % 8 != 0 {
+    while marked_subnet_mask_bits.len() % 8 != 0 {
         marked_subnet_mask_bits.push('0');
     }
 
@@ -150,20 +150,21 @@ fn ip_handling() {
     let subnet_bin = format!("{subnet_other:b}"); 
     let mut subnet_address = String::new();
 
-    if subnet_bin.chars().count() != subnet_mask_bits {
+    if subnet_bin.len() != subnet_mask_bits {
         for _ in 0..(subnet_mask_bits - subnet_bin.len()) {
             subnet_address.push('0');
         }
-        subnet_address.push_str(&subnet_bin);
     }
+
+    subnet_address.push_str(&subnet_bin);
 
     let mut broadcast_address = subnet_address.clone();
    
-    while subnet_address.chars().count() % 8 != 0 {
+    while subnet_address.len() % 8 != 0 {
         subnet_address.push('0');
     }
 
-    while broadcast_address.chars().count() % 8 != 0 {
+    while broadcast_address.len() % 8 != 0 {
         broadcast_address.push('1');
     }
 
@@ -234,6 +235,29 @@ fn ip_address_input() -> (Ipv4Addr, IPClass, u32, Ipv4Addr) {
                 continue
             },
         };
+
+        match ip_address_class {
+            IPClass::A => {
+                if ip_address_octets[1] != 0 || ip_address_octets[2] != 0 || ip_address_octets[3] != 0 {
+                    println!("Invalid IP Address, please input a correct IPv4 Address.");
+                    continue;
+                }    
+            },
+            IPClass::B => {
+                if ip_address_octets[2] != 0 || ip_address_octets[3] != 0 {
+                    println!("Invalid IP Address, please input a correct IPv4 Address.");
+                    continue;
+                }    
+            },
+            IPClass::C => {
+                if ip_address_octets[3] != 0 {
+                    println!("Invalid IP Address, please input a correct IPv4 Address.");
+                    continue;
+                }
+            },
+        }
+
+
         break (ip_address, ip_address_class, maximum_subnet_count, net_mask);
     }
 }
@@ -261,12 +285,12 @@ fn address_sanitization(address_tsan: String, ip_address: Ipv4Addr, ip_address_c
         }
     }
 
-    if address_tsan.chars().count() == 8 {
+    if address_tsan.len() == 8 {
         octet_1 = match u8::from_str_radix(&address_tsan[..8], 2) {
             Ok(octet_1) => octet_1,
             Err(_) => 255,
         };
-    } else if address_tsan.chars().count() == 16 {
+    } else if address_tsan.len() == 16 {
         octet_1 = match u8::from_str_radix(&address_tsan[..8], 2) {
             Ok(octet_1) => octet_1,
             Err(_) => 255,
