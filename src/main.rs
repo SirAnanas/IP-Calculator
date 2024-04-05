@@ -50,7 +50,7 @@ fn ip_handling() {
     
     let maximum_subnet_count = theor_maximum_subnet_count - 1;
     
-    println!("Please input a subnet count (max count: {})", maximum_subnet_count);
+    println!("Please input a subnet count (min count: {}, max count: {})", 2, maximum_subnet_count);
 
     loop {
         let mut subnet_count_inn = String::new();
