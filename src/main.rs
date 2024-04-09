@@ -281,12 +281,7 @@ fn ip_address_input() -> (Ipv4Addr, IPClass, u32, Ipv4Addr) {
     }
 }
 
-fn address_sanitization(
-    address_tsan: String,
-    ip_address: Ipv4Addr,
-    ip_address_class: &IPClass,
-    mode: u8,
-) -> Ipv4Addr {
+fn address_sanitization(address_tsan: String, ip_address: Ipv4Addr, ip_address_class: &IPClass, mode: u8) -> Ipv4Addr {
     let octet_1: u8;
     let mut octet_2: u8;
     let mut octet_3: u8;
