@@ -42,17 +42,10 @@ fn ip_handling() {
     let net_mask: Ipv4Addr;
 
     let subnet_count: u32;
-    let theor_maximum_subnet_count: u32;
+    let maximum_subnet_count: u32;
     let subnet: u32;
 
-    (
-        ip_address,
-        ip_address_class,
-        theor_maximum_subnet_count,
-        net_mask,
-    ) = ip_address_input();
-
-    let maximum_subnet_count = theor_maximum_subnet_count - 1;
+    (ip_address, ip_address_class, maximum_subnet_count, net_mask) = ip_address_input();
 
     println!(
         "Please input a subnet count (min count: {}, max count: {})",
@@ -86,7 +79,6 @@ fn ip_handling() {
             println!("Invalid subnet, please try again.");
             continue;
         }
-
 
         subnet_count = subnet_count_inn;
         break;
@@ -122,7 +114,7 @@ fn ip_handling() {
         break;
     }
 
-    let subnet_mask_bits = format!("{subnet_count:b}").len();
+    let subnet_mask_bits = format!("{subnet_count:b}").len() - 1;
     let mut marked_subnet_mask_bits = String::new();
 
     for _ in 0..subnet_mask_bits {
@@ -190,10 +182,6 @@ fn ip_handling() {
     println!("IP address: {}", ip_address);
     println!("IP address class: {:?}", ip_address_class);
     println!("IP address mask: {}", net_mask);
-    println!(
-        "Theoretical maximum subnet count: {}",
-        theor_maximum_subnet_count
-    );
     println!("Usable maximum subnet count: {}", maximum_subnet_count);
     println!("Subnet count: {}", subnet_count);
     println!("Subnet mask: {}", subnet_mask);
@@ -281,7 +269,12 @@ fn ip_address_input() -> (Ipv4Addr, IPClass, u32, Ipv4Addr) {
     }
 }
 
-fn address_sanitization(address_tsan: String, ip_address: Ipv4Addr, ip_address_class: &IPClass, mode: u8) -> Ipv4Addr {
+fn address_sanitization(
+    address_tsan: String,
+    ip_address: Ipv4Addr,
+    ip_address_class: &IPClass,
+    mode: u8,
+) -> Ipv4Addr {
     let octet_1: u8;
     let mut octet_2: u8;
     let mut octet_3: u8;
@@ -303,20 +296,20 @@ fn address_sanitization(address_tsan: String, ip_address: Ipv4Addr, ip_address_c
             octet_3 = 0;
         }
     }
-    
+
     match address_tsan.len() {
         8 => {
             octet_1 = u8::from_str_radix(&address_tsan[..8], 2).unwrap_or(255);
-        },
+        }
         16 => {
             octet_1 = u8::from_str_radix(&address_tsan[..8], 2).unwrap_or(255);
             octet_2 = u8::from_str_radix(&address_tsan[8..16], 2).unwrap_or(255);
-        },
+        }
         24 => {
             octet_1 = u8::from_str_radix(&address_tsan[..8], 2).unwrap_or(255);
             octet_2 = u8::from_str_radix(&address_tsan[8..16], 2).unwrap_or(255);
             octet_3 = u8::from_str_radix(&address_tsan[16..24], 2).unwrap_or(255);
-        },
+        }
         _ => octet_1 = 255,
     }
 
